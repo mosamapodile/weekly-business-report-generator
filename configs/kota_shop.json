@@ -1,0 +1,20 @@
+{
+    "business_name": "Mama's Best Kotas",
+    "business_type": "Fast Food",
+    "currency": "R",
+    "report_color": "#FF5733",
+    "menu": {
+        "Bases": {
+            "Quarter": 15,
+            "Half": 25,
+            "Full": 40
+        },
+        "Add_ons": {
+            "Cheese": 5,
+            "Egg": 5,
+            "Russian": 10,
+            "Polony": 5,
+            "Chips": 10
+        }
+    }
+}

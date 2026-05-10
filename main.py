@@ -1,85 +1,130 @@
 import pandas as pd
+import json
+import os
 import matplotlib.pyplot as plt
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
-import os
+from reportlab.lib.enums import TA_CENTER
+from utils import get_report_styles, ensure_directories
 
-# Updated Paths & Column Names
-DATA_PATH = 'data/salon_sales.csv'
-CHART_PATH = 'charts/service_breakdown.png'
-REPORT_PATH = 'reports/weekly_summary.pdf'
-
-def create_business_report():
-    # 1. Load Data with your 'Amount' structure
-    df = pd.read_csv(DATA_PATH)
+def run_business_pipeline(client_id):
+    # --- 1. DATA EXTRACTION & ANALYTICS ---
+    with open(f'configs/{client_id}.json', 'r') as f:
+        config = json.load(f)
     
-    # Calculate Business Insights
+    df = pd.read_csv(f'data/{client_id}_sales.csv')
+    df['Date'] = pd.to_datetime(df['Date'])
+    
+    start_date = df['Date'].min().strftime('%d %b')
+    end_date = df['Date'].max().strftime('%d %b %Y')
+    
     total_revenue = df['Amount'].sum()
-    service_totals = df.groupby('Service')['Amount'].sum().sort_values(ascending=False)
+    avg_ticket = df['Amount'].mean()
+    total_sales = len(df)
     
-    # Identify the "MVP" (Most Valuable Performer)
-    top_service = service_totals.idxmax()
-    top_revenue = service_totals.max()
-
-    # 2. Create the Visual (A clean bar chart)
-    plt.figure(figsize=(7, 5))
-    service_totals.plot(kind='bar', color='#4A90E2')
-    plt.title('Revenue Contribution by Service', fontsize=14, fontweight='bold')
-    plt.ylabel('Total Amount (R)')
-    plt.xticks(rotation=45)
+    daily_sales = df.groupby(df['Date'].dt.day_name())['Amount'].sum().reindex(
+        ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    ).fillna(0)
+    
+    worst_day = daily_sales[daily_sales > 0].idxmin() if not daily_sales[daily_sales > 0].empty else "N/A"
+    service_summary = df.groupby('Service')['Amount'].sum().sort_values(ascending=False)
+    top_service = service_summary.index[0]
+    
+    # --- 2. CHART GENERATION ---
+    plt.figure(figsize=(6, 3)) 
+    service_summary.plot(kind='barh', color=config.get('report_color', '#333333'))
+    plt.title(f"Revenue Analysis", fontsize=10)
     plt.tight_layout()
-    plt.savefig(CHART_PATH)
+    
+    chart_path = f"charts/{client_id}_breakdown.png"
+    plt.savefig(chart_path)
     plt.close()
 
-    # 3. Build the PDF
-    doc = SimpleDocTemplate(REPORT_PATH, pagesize=letter)
-    styles = getSampleStyleSheet()
+    # --- 3. PDF BUILDING (The "Centered & Spacious" Layout) ---
+    pdf_path = f"reports/{client_id}_weekly_report.pdf"
     
-    # Custom Brand Style
-    brand_style = ParagraphStyle('Brand', parent=styles['Normal'], fontSize=10, textColor=colors.grey)
+    # Using generous 50pt margins for that "gentle" feel
+    doc = SimpleDocTemplate(
+        pdf_path, 
+        pagesize=letter, 
+        leftMargin=50, rightMargin=50, topMargin=50, bottomMargin=50
+    )
+    styles = get_report_styles()
     
+    # Create a specific Centered Style for the Header
+    centered_header = styles['BrandHeader']
+    centered_header.alignment = TA_CENTER
+    
+    centered_normal = styles['Normal']
+    centered_normal.alignment = TA_CENTER
+
     elements = []
 
-    # Human-Friendly Header
-    elements.append(Paragraph("Weekly Revenue Insight", styles['Title']))
-    elements.append(Spacer(1, 10))
-    elements.append(Paragraph(f"<b>Executive Summary:</b> Excellent work! This week the salon brought in a total of <b>R{total_revenue:,.2f}</b>.", styles['Normal']))
-    elements.append(Spacer(1, 10))
-    elements.append(Paragraph(f"The standout service was <b>{top_service}</b>, which generated <b>R{top_revenue:,.2f}</b>.", styles['Normal']))
+    # --- HEADER SECTION ---
+    elements.append(Paragraph(f"LocalFlow Agency: {config['business_name']}", centered_header))
     
-    # Add the Chart
-    elements.append(Spacer(1, 20))
-    elements.append(Image(CHART_PATH, width=400, height=280))
+    # This is the "Human Spacing" gap you requested
+    elements.append(Spacer(1, 15)) 
     
-    # Professional Data Table
-    elements.append(Spacer(1, 20))
-    elements.append(Paragraph("<b>Detailed Service Breakdown</b>", styles['Heading3']))
+    elements.append(Paragraph(f"<b>Reporting Window:</b> {start_date} - {end_date}", centered_normal))
     
-    table_data = [['Service Type', 'Total Revenue']]
-    for service, amt in service_totals.items():
-        table_data.append([service, f"R{amt:,.2f}"])
+    # Space before the Stats Box
+    elements.append(Spacer(1, 30))
 
-    report_table = Table(table_data, colWidths=[150, 100])
-    report_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.black),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.whitesmoke, colors.lightgrey])
+    # --- STATS BOX (Centered) ---
+    stats_data = [[
+        Paragraph(f"<b>Revenue</b><br/>R{total_revenue:,.2f}", centered_normal),
+        Paragraph(f"<b>Avg Spend</b><br/>R{avg_ticket:.2f}", centered_normal),
+        Paragraph(f"<b>Customers</b><br/>{total_sales}", centered_normal)
+    ]]
+    stats_table = Table(stats_data, colWidths=[150, 150, 150])
+    stats_table.setStyle(TableStyle([
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('BACKGROUND', (0,0), (-1,-1), colors.whitesmoke),
+        ('BOX', (0,0), (-1,-1), 0.5, colors.lightgrey),
+        ('TOPPADDING', (0,0), (-1,-1), 12),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 12),
     ]))
+    elements.append(stats_table)
     
-    elements.append(report_table)
-    
-    # Branding Footer
-    elements.append(Spacer(1, 50))
-    elements.append(Paragraph("Generated via MyPath Business Automation", brand_style))
+    elements.append(Spacer(1, 35))
+
+    # --- INSIGHTS SECTION ---
+    elements.append(Paragraph("Strategic Business Insights", styles['Heading3']))
+    elements.append(Spacer(1, 10))
+    insights = [
+        f"• <b>The {worst_day} Gap:</b> Your slowest day was {worst_day}. Action: Run a {worst_day} promo to cover overhead.",
+        f"• <b>Focus Service:</b> {top_service} is your star earner. Action: Create a loyalty program for this service.",
+        f"• <b>Upsell Potential:</b> An R20 add-on per sale would have earned you <b>R{total_sales * 20:,.2f}</b> extra."
+    ]
+    for line in insights:
+        elements.append(Paragraph(line, styles['Normal']))
+        elements.append(Spacer(1, 6))
+
+    # --- VISUALIZATION (Centered) ---
+    elements.append(Spacer(1, 25))
+    img = Image(chart_path, width=420, height=200)
+    img.hAlign = 'CENTER'
+    elements.append(img)
+
+    # --- FOOTER ---
+    elements.append(Spacer(1, 40))
+    elements.append(Paragraph("<hr/>", styles['Normal']))
+    elements.append(Paragraph("<b>LocalFlow Agency</b> • <i>Optimizing Local Business Intelligence</i>", styles['Footer']))
 
     doc.build(elements)
-    print(f"Success! Report saved to {REPORT_PATH}")
+    print(f"✅ Gentle One-Pager Complete: {config['business_name']}")
 
 if __name__ == "__main__":
-    create_business_report()
+    ensure_directories()
+    active_clients = ['salon', 'kota_shop']
+    
+    print("🚀 LocalFlow Agency: Pipeline Running...")
+    for client in active_clients:
+        try:
+            run_business_pipeline(client)
+        except Exception as e:
+            print(f"❌ Error with {client}: {e}")
+    print("-" * 50)
+    print("🏁 SUCCESS: Masterfully spaced reports are ready in '/reports'.")

@@ -1,0 +1,17 @@
+{
+    "business_name": "Lerato's Beauty & Hair",
+    "business_type": "Salon",
+    "report_color": "#E0218A",
+    "currency": "R",
+    "contact_email": "lerato@beautysalon.co.za",
+    "services": [
+        "Nails",
+        "Braids",
+        "Wig Install",
+        "Wash",
+        "Treatment",
+        "Acrylic Set"
+    ],
+    "pricing_logic": "fixed",
+    "owner_name": "Lerato"
+}

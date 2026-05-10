@@ -1,46 +1,17 @@
-Date,Service,Amount
-2026-05-04,Nails,300
-2026-05-04,Braids,450
-2026-05-04,Wash,120
-2026-05-04,Wig Install,800
-2026-05-04,Nails,300
-2026-05-04,Braids,450
-2026-05-05,Nails,350
-2026-05-05,Braids,450
-2026-05-05,Wash,120
-2026-05-05,Wig Install,800
-2026-05-05,Nails,350
-2026-05-05,Braids,450
-2026-05-06,Wash,120
-2026-05-06,Braids,500
-2026-05-06,Nails,300
-2026-05-06,Wig Install,800
-2026-05-06,Wash,120
-2026-05-07,Braids,500
-2026-05-07,Nails,350
-2026-05-07,Wig Install,850
-2026-05-07,Wash,120
-2026-05-07,Braids,500
-2026-05-08,Wig Install,900
-2026-05-08,Wig Install,900
-2026-05-08,Nails,400
-2026-05-08,Braids,600
-2026-05-08,Wash,150
-2026-05-08,Nails,400
-2026-05-09,Braids,650
-2026-05-09,Braids,650
-2026-05-09,Wig Install,950
-2026-05-09,Nails,450
-2026-05-09,Wash,150
-2026-05-09,Wig Install,950
-2026-05-09,Nails,450
-2026-05-10,Wig Install,1000
-2026-05-10,Braids,700
-2026-05-10,Nails,500
-2026-05-10,Wash,200
-2026-05-10,Wash,200
-2026-05-10,Wig Install,1000
-2026-05-10,Nails,500
-2026-05-10,Braids,700
-2026-05-10,Wash,200
-2026-05-10,Wig Install,1000
+Date,Service,Amount,Stylist
+2026-05-04,Nails,300,Thandi
+2026-05-04,Braids,450,Thandi
+2026-05-04,Wash,120,Lerato
+2026-05-05,Wig Install,800,Lerato
+2026-05-05,Acrylic Set,550,Thandi
+2026-05-05,Nails,300,Thandi
+2026-05-06,Treatment,250,Lerato
+2026-05-06,Wash,120,Lerato
+2026-05-06,Braids,450,Thandi
+2026-05-07,Acrylic Set,550,Thandi
+2026-05-07,Wig Install,800,Lerato
+2026-05-08,Nails,300,Thandi
+2026-05-08,Wash,120,Lerato
+2026-05-09,Braids,450,Thandi
+2026-05-09,Acrylic Set,550,Thandi
+2026-05-10,Treatment,250,Lerato
